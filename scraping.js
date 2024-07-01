@@ -149,7 +149,7 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
     console.log(`Scrape ended at ${updateDateTime()}`);
 
     // Wait for 30 seconds before fetching messages again
-    await delay(5000);
+    await delay(30000);
   }
 }
 
