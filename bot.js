@@ -19,7 +19,7 @@ async function sendToDiscord(message) {
   }
 
   const formattedMessage = `
-# [${message.nickname}](https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230/message/${message.id}) 
+# [${message.nickname}](<https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230/message/${message.id}>) 
 *${message.time}*
 >>> **${message.body}**
   `;
@@ -38,7 +38,7 @@ async function sendMotdToDiscord(motd) {
   const formattedMotd = `
 # [${motd.title}](<https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230>)
 *${motd.time}*
->>> ${motd.body}
+>>> **${motd.body}**
   `;
 
   const sentMotd = await channel.send(formattedMotd);
