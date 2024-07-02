@@ -1,4 +1,9 @@
+# environment files
 .env
+
+# basic npm
 node_modules
+
+# files created during run
 cookies.json
 scraping_data.json
