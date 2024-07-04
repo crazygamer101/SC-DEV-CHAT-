@@ -1,4 +1,9 @@
+# environments
 .env
+
+# modules
 node_modules
+
+# files created
 cookies.json
 scraping_data.json

@@ -7,10 +7,9 @@ const PASSWORD = process.env.RSI_PASSWORD;
 const COOKIES_PATH = 'cookies.json';
 
 async function login(){
-  const browser = await puppeteer.launch({headless: false, defaultViewport: null}); //shows the browser if "false"
+  const browser = await puppeteer.launch({headless: false, defaultViewport: null});
   const page = await browser.newPage();
 
-  //Load cookies
   const cookiesExist =  fs.existsSync(COOKIES_PATH);
   if (cookiesExist) {
     const cookies = JSON.parse(fs.readFileSync(COOKIES_PATH, 'utf8'));
@@ -18,16 +17,13 @@ async function login(){
     console.log('Cookies used');
   };
 
-  // Spectrum login
   await page.goto('https://robertsspaceindustries.com/connect?jumpto=/spectrum/community/SC/lobby/38230',);
-  //await page.waitForSelector('input[data-cy-id="input"][id=":r1:"]', { visible: true });
 
   if (!cookiesExist) {
     await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
     await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
     await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
-    // 2FA Page
     await page.waitForSelector('input[data-cy-id="input"][id=":r4:"]', { visible: true });
 
     console.log('Please enter your 2FA in the Terminal.');
@@ -35,18 +31,17 @@ async function login(){
       process.stdin.once('data', (data) => resolve(data.toString().trim()));
     });
 
-    // Input 2FA
     await page.type('input[data-cy-id="input"][id=":r4:"]', code);
 
-    // Device Name
     const faName = 'bot';
-
     await page.type('input[data-cy-id="input"][id=":r5:"]', faName);
 
     const faDuration = '1 year';
 
-    // Trust Device Duration This may break
-    await page.click('div[data-cy-id="select_target__content"]', faDuration);
+    // Trust Device Duration
+    await page.click('div[data-cy-id="select_target__content"]');
+    await page.waitForSelector(`div[data-cy-id="select_option__${faDuration}"]`, { visible: true });
+    await page.click(`div[data-cy-id="select_option__${faDuration}"]`);
     console.log(`Device trusted for: ${faDuration}`);
 
     // Submit 2FA
@@ -62,24 +57,21 @@ async function login(){
     // Confirm if redirected to the desired URL
     const currentURL = page.url();
     if (currentURL === 'https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230') {
-    console.log('Monitoring SC Testing Chat.');
+      console.log('Monitoring SC Testing Chat.');
     } else {
-    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+      console.log('Did not redirect to the expected URL. Current URL:', currentURL);
     }
-
   }
 
   // Confirm if redirected to the desired URL
   const currentURL = page.url();
   if (currentURL === 'https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230') {
-  console.log('Monitoring SC Testing Chat.');
+    console.log('Monitoring SC Testing Chat.');
   } else {
-  console.log('Did not redirect to the expected URL. Current URL:', currentURL);
-  };
+    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+  }
   
   return page;
-
 };
 
-module.exports = login
-
+module.exports = login;

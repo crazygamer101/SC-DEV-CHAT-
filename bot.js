@@ -12,7 +12,7 @@ const client = new Client({
 });
 
 async function sendToDiscord(message) {
-  const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID_MESSAGES);
+  const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID_TESTING);
   if (!channel) {
     console.error('Channel not found!');
     return null;
@@ -29,7 +29,7 @@ async function sendToDiscord(message) {
 }
 
 async function sendMotdToDiscord(motd) {
-  const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID_MOTD);
+  const channel = await client.channels.fetch(process.env.DISCORD_CHANNEL_ID_TESTING);
   if (!channel) {
     console.error('Channel not found!');
     return null;
