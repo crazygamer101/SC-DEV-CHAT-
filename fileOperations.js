@@ -1,3 +1,4 @@
+// fileOperations.js
 const fs = require('fs');
 const path = require('path');
 
@@ -22,7 +23,4 @@ async function saveScrapingData(data) {
   }
 }
 
-module.exports = {
-  loadScrapingData,
-  saveScrapingData
-};
+module.exports = { loadScrapingData, saveScrapingData };

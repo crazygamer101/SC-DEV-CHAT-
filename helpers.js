@@ -1,5 +1,4 @@
-const { parseDocument } = require('htmlparser2');
-
+// helpers.js
 function updateDateTime() {
   const today = new Date();
   const date = (today.getMonth() + 1) + '-' + today.getDate() + '-' + today.getFullYear();
@@ -10,6 +9,7 @@ function updateDateTime() {
 }
 
 function extractTextFromHTML(html) {
+  const { parseDocument } = require('htmlparser2');
   const doc = parseDocument(html);
   const textParts = [];
 
@@ -29,8 +29,4 @@ function extractTextFromHTML(html) {
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-module.exports = {
-  updateDateTime,
-  extractTextFromHTML,
-  delay
-};
+module.exports = { updateDateTime, extractTextFromHTML, delay };

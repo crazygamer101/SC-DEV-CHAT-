@@ -1,3 +1,4 @@
+// scrapeFunctions.js
 async function getMessages(page, lastMessageId) {
   return await page.evaluate((lastMessageId) => {
     const messageList = document.querySelectorAll(".message-item.status-default");
@@ -14,7 +15,8 @@ async function getMessages(page, lastMessageId) {
 
       const displayNameElement = message.querySelector(".displayname");
       const messageColor = displayNameElement ? getComputedStyle(displayNameElement).color : null;
-      if (messageColor === 'rgb(222, 195, 66)' && id > lastMessageId) {
+
+      if ((messageColor === 'rgb(222, 195, 66)' || (messageColor === 'rgb(125, 103, 233)' && nickname === 'Void Kobold | CIG')) && id > lastMessageId) {
         return { id, nickname, time, body };
       } else {
         return null;
@@ -42,7 +44,4 @@ async function getMotd(page) {
   });
 }
 
-module.exports = {
-  getMessages,
-  getMotd
-};
+module.exports = { getMessages, getMotd };
