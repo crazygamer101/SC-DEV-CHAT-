@@ -1,7 +1,9 @@
+// scraping.js
 const login = require('./login');
 const { updateDateTime, extractTextFromHTML, delay } = require('./helpers');
 const { loadScrapingData, saveScrapingData } = require('./fileOperations');
 const { getMessages, getMotd } = require('./scrapeFunctions');
+const { insertDocument } = require('./dataApiHelper');
 
 async function scraping(sendToDiscord, sendMotdToDiscord) {
   const page = await login();
@@ -26,12 +28,19 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
 
       lastMessageId = message.id;
 
+      // Save message to MongoDB in 'messages' collection
+      await insertDocument('messages', message);
+
       await sendToDiscord(message);
       dataChanged = true;
     }
 
     if (motd && motd.body !== lastMotdBody) {
       console.log(motd);
+
+      // Save MOTD to MongoDB in 'motd' collection
+      await insertDocument('motd', motd);
+
       await sendMotdToDiscord(motd);
       lastMotdBody = motd.body;
       dataChanged = true;
@@ -43,7 +52,7 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
 
     console.log(`Scrape ended at ${updateDateTime()}`);
 
-    await delay(30000);
+    await delay(5000);
   }
 }
 
