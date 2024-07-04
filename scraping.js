@@ -52,7 +52,7 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
 
     console.log(`Scrape ended at ${updateDateTime()}`);
 
-    await delay(5000);
+    await delay(30000);
   }
 }
 
