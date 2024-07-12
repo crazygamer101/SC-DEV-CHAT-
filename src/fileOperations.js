@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const DATA_FILE_PATH = path.join(__dirname, 'scraping_data.json');
+const DATA_FILE_PATH = path.join(__dirname, '..', 'localData', 'scraping_data.json');
 
 async function loadScrapingData() {
   try {

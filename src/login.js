@@ -4,10 +4,10 @@ const fs = require('fs');
 
 const USERNAME = process.env.RSI_USERNAME;
 const PASSWORD = process.env.RSI_PASSWORD;
-const COOKIES_PATH = 'cookies.json';
+const COOKIES_PATH = './localData/cookies.json';
 
 async function login(){
-  const browser = await puppeteer.launch({headless: false, defaultViewport: null});
+  const browser = await puppeteer.launch({headless: true, defaultViewport: null});
   const page = await browser.newPage();
 
   const cookiesExist =  fs.existsSync(COOKIES_PATH);
