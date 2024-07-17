@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const scraping = require('./scraping');
-const { handleInteraction } = require('./commands');
+const { handleInteraction } = require('./modCommands');
 const { sendToDiscord, sendMotdToDiscord } = require('./messages'); // Import sendToDiscord and sendMotdToDiscord
 require('dotenv').config();
 
