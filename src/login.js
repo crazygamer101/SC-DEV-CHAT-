@@ -1,11 +1,13 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const { timeout } = require('puppeteer');
 
 const USERNAME = process.env.RSI_USERNAME;
 const PASSWORD = process.env.RSI_PASSWORD;
 const COOKIES_PATH = './localData/cookies.json';
 const TARGET_URL = 'https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230';
+const CHECK_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
 async function login() {
   const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
@@ -36,8 +38,13 @@ async function login() {
 };
 
 async function abbreviatedLogin(page) {
-  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
-  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
+  console.log('abbreviated login')
+
+
+  await page.waitForSelector('input[data-cy-id="input"][id=":r2:"]', {visible: true});
+
+  await page.type('input[data-cy-id="input"][id=":r2:"]', USERNAME);
+  await page.type('input[data-cy-id="input"][id=":r3:"]', PASSWORD);
   await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
   await page.waitForNavigation({ waitUntil: 'networkidle2' });
@@ -52,6 +59,7 @@ async function abbreviatedLogin(page) {
 }
 
 async function performLogin(page) {
+  console.log('full log in')
   await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
   await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
   await page.click('button[type="submit"][data-cy-id="__submit-button"]');
@@ -104,5 +112,23 @@ async function performLogin(page) {
     console.log('Did not redirect to the expected URL. Current URL:', currentURL);
   }
 }
+
+async function periodicCheck() {
+  try {
+    const page = await login();
+    const currentURL = page.url();
+    if (currentURL !== TARGET_URL) {
+      console.log('Session timed out, performing login.');
+      await performLogin(page);
+    } else {
+      console.log('Session is still active.');
+    }
+    await page.close();
+  } catch (error) {
+    console.error('Error during periodic check:', error);
+  }
+}
+
+setInterval(periodicCheck, CHECK_INTERVAL);
 
 module.exports = login;
