@@ -7,7 +7,7 @@ const USERNAME = process.env.RSI_USERNAME;
 const PASSWORD = process.env.RSI_PASSWORD;
 const COOKIES_PATH = './localData/cookies.json';
 const TARGET_URL = 'https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230';
-const CHECK_INTERVAL = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 async function login() {
   const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
@@ -41,10 +41,10 @@ async function abbreviatedLogin(page) {
   console.log('abbreviated login')
 
 
-  await page.waitForSelector('input[data-cy-id="input"][id=":r2:"]', {visible: true});
+  await page.waitForSelector('input[data-cy-id="input"][id=":r1:"]', {visible: true});
 
-  await page.type('input[data-cy-id="input"][id=":r2:"]', USERNAME);
-  await page.type('input[data-cy-id="input"][id=":r3:"]', PASSWORD);
+  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
+  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
   await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
   await page.waitForNavigation({ waitUntil: 'networkidle2' });
@@ -64,7 +64,7 @@ async function performLogin(page) {
   await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
   await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
-  await page.waitForSelector('input[data-cy-id="input"][id=":r4:"]', { visible: true });
+  await page.waitForSelector('input[data-cy-id="input"][id=":r5:"]', { visible: true });
 
   console.log('Please enter your 2FA in the Terminal.');
   const code = await new Promise((resolve) => {
