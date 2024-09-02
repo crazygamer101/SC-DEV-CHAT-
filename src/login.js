@@ -38,24 +38,51 @@ async function login() {
 };
 
 async function abbreviatedLogin(page) {
-  console.log('abbreviated login')
+  console.log('abbreviated login');
 
+  await page.waitForSelector('div[data-cy-id="checkbox__display"]')
 
-  await page.waitForSelector('input[data-cy-id="input"][id=":r1:"]', {visible: true});
+  // Loop through possible "r" values (r1 to r4)
+  for (let i = 1; i <= 4; i++) {
+    const inputLabelSelector = `label[data-cy-id="input-label"][for=":r${i}:"] span`;
+    
+    // Wait for the selector and get the text content
+    const labelText = await page.$eval(inputLabelSelector, el => el.textContent).catch(() => null);
 
-  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
-  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
-  await page.click('button[type="submit"][data-cy-id="__submit-button"]');
+    // Check if the label text contains "Email"
+    if (labelText && labelText.includes('Email')) {
+      // Use the correct "r" value for the input fields
+      const usernameSelector = `input[data-cy-id="input"][id=":r${i}:"]`;
+      const passwordSelector = `input[data-cy-id="input"][id=":r${i + 1}:"]`; // Assuming the password field follows the username field
 
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
+      console.log(`Selector Used for Username: ${usernameSelector}`);
 
-  // Confirm if redirected to the desired URL
-  const currentURL = page.url();
-  if (currentURL === TARGET_URL) {
-    console.log('Monitoring SC Testing Chat.');
-  } else {
-    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+      // Wait for the username input field to be visible
+      await page.waitForSelector(usernameSelector, { visible: true });
+
+      // Type the username and password
+      await page.type(usernameSelector, USERNAME);
+      await page.type(passwordSelector, PASSWORD);
+
+      // Click the submit button
+      await page.click('button[type="submit"][data-cy-id="__submit-button"]');
+
+      // Wait for the navigation to complete
+      await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+      // Confirm if redirected to the desired URL
+      const currentURL = page.url();
+      if (currentURL === TARGET_URL) {
+        console.log('Monitoring SC Testing Chat.');
+      } else {
+        console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+      }
+      return; // Exit the function after finding and using the correct inputs
+    }
   }
+
+  // If no "Email" label was found
+  console.log('No Email input field found.');
 }
 
 async function performLogin(page) {
