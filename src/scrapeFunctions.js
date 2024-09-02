@@ -16,7 +16,7 @@ async function getMessages(page, lastMessageId) {
       const displayNameElement = message.querySelector(".displayname");
       const messageColor = displayNameElement ? getComputedStyle(displayNameElement).color : null;
 
-      if ((messageColor === 'rgb(222, 195, 66)' || (messageColor === 'rgb(125, 103, 233)' && nickname === 'Void Kobold | CIG')) && id > lastMessageId) {
+      if ((messageColor === 'rgb(222, 195, 66)' || (messageColor === 'rgb(125, 103, 233') || (messageColor === 'rgb(255, 98, 98)')) && id > lastMessageId) {
         return { id, nickname, time, body };
       } else {
         return null;
