@@ -10,7 +10,7 @@ const TARGET_URL = 'https://robertsspaceindustries.com/spectrum/community/SC/lob
 const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const browser = await puppeteer.launch({ headless: true, defaultViewport: null });
   const page = await browser.newPage();
 
   const cookiesExist = fs.existsSync(COOKIES_PATH);
@@ -37,10 +37,15 @@ async function login() {
   return page;
 };
 
+// Define the wait function to create a delay
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function abbreviatedLogin(page) {
   console.log('abbreviated login');
 
-  await page.waitForSelector('div[data-cy-id="checkbox__display"]')
+  await page.waitForSelector('div[data-cy-id="checkbox__display"]');
 
   // Loop through possible "r" values (r1 to r4)
   for (let i = 1; i <= 4; i++) {
@@ -64,6 +69,9 @@ async function abbreviatedLogin(page) {
       await page.type(usernameSelector, USERNAME);
       await page.type(passwordSelector, PASSWORD);
 
+      // Add a delay before pressing the submit button
+      await wait(5255); // Wait for 5.2 seconds (2000 milliseconds)
+
       // Click the submit button
       await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
@@ -72,6 +80,9 @@ async function abbreviatedLogin(page) {
 
       // Confirm if redirected to the desired URL
       const currentURL = page.url();
+
+      await wait(10000);
+
       if (currentURL === TARGET_URL) {
         console.log('Monitoring SC Testing Chat.');
       } else {
