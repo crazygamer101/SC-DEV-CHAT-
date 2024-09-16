@@ -1,6 +1,7 @@
 require('dotenv').config();
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
+const { timeout } = require('puppeteer');
 
 const USERNAME = process.env.RSI_USERNAME;
 const PASSWORD = process.env.RSI_PASSWORD;
@@ -14,27 +15,27 @@ async function login() {
 
   const cookiesExist = fs.existsSync(COOKIES_PATH);
   if (cookiesExist) {
-      const cookies = JSON.parse(fs.readFileSync(COOKIES_PATH, 'utf8'));
-      await page.setCookie(...cookies);
-      console.log('Cookies used');
+    const cookies = JSON.parse(fs.readFileSync(COOKIES_PATH, 'utf8'));
+    await page.setCookie(...cookies);
+    console.log('Cookies used');
   }
 
   await page.goto('https://robertsspaceindustries.com/connect?jumpto=/spectrum/community/SC/lobby/38230');
 
   if (cookiesExist) {
-      let currentURL = page.url();
-      if (currentURL !== TARGET_URL) {
-          console.log('Cookies use failed. Current URL:', currentURL);
-          await abbreviatedLogin(page);
-      } else {
-          console.log('Monitoring SC Testing Chat.');
-      }
+    let currentURL = page.url();
+    if (currentURL !== TARGET_URL) {
+      console.log('Cookies use failed. Current URL:', currentURL);
+      await abbreviatedLogin(page);
+    } else {
+      console.log('Monitoring SC Testing Chat.');
+    }
   } else {
-      await performLogin(page);
+    await performLogin(page);
   }
 
   return page;
-}
+};
 
 // Define the wait function to create a delay
 function wait(ms) {
@@ -69,7 +70,7 @@ async function abbreviatedLogin(page) {
       await page.type(passwordSelector, PASSWORD);
 
       // Add a delay before pressing the submit button
-      await wait(5255); // Wait for 5.2 seconds 
+      await wait(5255); // Wait for 5.2 seconds (2000 milliseconds)
 
       // Click the submit button
       await page.click('button[type="submit"][data-cy-id="__submit-button"]');
@@ -96,68 +97,74 @@ async function abbreviatedLogin(page) {
 }
 
 async function performLogin(page) {
-    console.log('Full login');
-    await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
-    await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
-    await page.click('button[type="submit"][data-cy-id="__submit-button"]');
+  console.log('full log in')
+  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
+  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
+  await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
   await page.waitForSelector('input[data-cy-id="input"][id=":r5:"]', { visible: true });
 
-    console.log('Please enter your 2FA in the Terminal.');
-    const code = await new Promise((resolve) => {
-        process.stdin.once('data', (data) => resolve(data.toString().trim()));
-    });
+  console.log('Please enter your 2FA in the Terminal.');
+  const code = await new Promise((resolve) => {
+    process.stdin.once('data', (data) => resolve(data.toString().trim()));
+  });
 
-    await page.type('input[data-cy-id="input"][id=":r4:"]', code);
+  await page.type('input[data-cy-id="input"][id=":r4:"]', code);
 
-    const faName = 'bot';
-    await page.type('input[data-cy-id="input"][id=":r5:"]', faName);
+  const faName = 'bot';
+  await page.type('input[data-cy-id="input"][id=":r5:"]', faName);
 
-    const faDuration = '1 year';
+  const faDuration = '1 year';
 
-    await page.click('div[data-cy-id="select_target__content"]');
+  // Trust Device Duration
+  await page.click('div[data-cy-id="select_target__content"]');
 
-    await page.waitForSelector('p[data-cy-id="select_option__label"]', { visible: true, timeout: 5000 });
+  // Wait for the dropdown options to be visible and ensure it's fully loaded
+  await page.waitForSelector('p[data-cy-id="select_option__label"]', { visible: true, timeout: 5000 });
 
-    await page.evaluate(() => {
-        const option = [...document.querySelectorAll('p[data-cy-id="select_option__label"]')].find(el => el.innerText.includes('1 year'));
-        if (option) {
-            option.click();
-        }
-    });
-
-    console.log(`Device trusted for: ${faDuration}`);
-
-    await page.click('button[type="submit"][data-cy-id="button"]');
-
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    const cookies = await page.cookies();
-    fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
-    console.log('Cookies saved.');
-
-    const currentURL = page.url();
-    if (currentURL === TARGET_URL) {
-        console.log('Monitoring SC Testing Chat.');
-    } else {
-        console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+  // Try selecting the option using different methods
+  await page.evaluate(() => {
+    const option = [...document.querySelectorAll('p[data-cy-id="select_option__label"]')].find(el => el.innerText.includes('1 year'));
+    if (option) {
+      option.click();
     }
+  });
+
+  console.log(`Device trusted for: ${faDuration}`);
+
+  // Submit 2FA
+  await page.click('button[type="submit"][data-cy-id="button"]');
+
+  await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+  // Save cookies
+  const cookies = await page.cookies();
+  fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
+  console.log('Cookies saved.');
+
+  // Confirm if redirected to the desired URL
+  const currentURL = page.url();
+  if (currentURL === TARGET_URL) {
+    console.log('Monitoring SC Testing Chat.');
+  } else {
+    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+  }
 }
 
 async function periodicCheck() {
-    try {
-        const page = await login();
-        const currentURL = page.url();
-        if (currentURL !== TARGET_URL) {
-            console.log('Session timed out, performing login.');
-            await performLogin(page);
-        } else {
-            console.log('Session is still active.');
-        }
-        await page.close();
-    } catch (error) {
-        console.error('Error during periodic check:', error);
+  try {
+    const page = await login();
+    const currentURL = page.url();
+    if (currentURL !== TARGET_URL) {
+      console.log('Session timed out, performing login.');
+      await performLogin(page);
+    } else {
+      console.log('Session is still active.');
     }
+    await page.close();
+  } catch (error) {
+    console.error('Error during periodic check:', error);
+  }
 }
 
 setInterval(periodicCheck, CHECK_INTERVAL);
