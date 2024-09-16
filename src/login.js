@@ -1,7 +1,6 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const { timeout } = require('puppeteer');
 
 const USERNAME = process.env.RSI_USERNAME;
 const PASSWORD = process.env.RSI_PASSWORD;
