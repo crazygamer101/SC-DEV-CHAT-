@@ -96,59 +96,90 @@ async function abbreviatedLogin(page) {
 }
 
 async function performLogin(page) {
-  console.log('full log in')
-  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
-  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
-  await page.click('button[type="submit"][data-cy-id="__submit-button"]');
+  console.log('full log in');
 
-  await page.waitForSelector('input[data-cy-id="input"][id=":r5:"]', { visible: true });
+  // Loop through possible "r" values (r1 to r4) to find username and password fields
+  for (let i = 1; i <= 4; i++) {
+    const inputLabelSelector = `label[data-cy-id="input-label"][for=":r${i}:"] span`;
+    
+    // Wait for the selector and get the text content
+    const labelText = await page.$eval(inputLabelSelector, el => el.textContent).catch(() => null);
 
-  console.log('Please enter your 2FA in the Terminal.');
-  const code = await new Promise((resolve) => {
-    process.stdin.once('data', (data) => resolve(data.toString().trim()));
-  });
+    // Check if the label text contains "Email"
+    if (labelText && labelText.includes('Email')) {
+      const usernameSelector = `input[data-cy-id="input"][id=":r${i}:"]`;
+      const passwordSelector = `input[data-cy-id="input"][id=":r${i + 1}:"]`;
 
-  await page.type('input[data-cy-id="input"][id=":r4:"]', code);
+      console.log(`Selector Used for Username: ${usernameSelector}`);
 
-  const faName = 'bot';
-  await page.type('input[data-cy-id="input"][id=":r5:"]', faName);
+      // Wait for the username input field to be visible
+      await page.waitForSelector(usernameSelector, { visible: true });
 
-  const faDuration = '1 year';
+      // Type the username and password
+      await page.type(usernameSelector, USERNAME);
+      await page.type(passwordSelector, PASSWORD);
 
-  // Trust Device Duration
-  await page.click('div[data-cy-id="select_target__content"]');
+      // Add a delay before pressing the submit button
+      await wait(5255); // Wait for 5.2 seconds
 
-  // Wait for the dropdown options to be visible and ensure it's fully loaded
-  await page.waitForSelector('p[data-cy-id="select_option__label"]', { visible: true, timeout: 5000 });
+      // Click the submit button
+      await page.click('button[type="submit"][data-cy-id="__submit-button"]');
 
-  // Try selecting the option using different methods
-  await page.evaluate(() => {
-    const option = [...document.querySelectorAll('p[data-cy-id="select_option__label"]')].find(el => el.innerText.includes('1 year'));
-    if (option) {
-      option.click();
+      // Wait for the 2FA input field to be visible
+      await page.waitForSelector('input[data-cy-id="input"][id=":r5:"]', { visible: true });
+
+      console.log('Please enter your 2FA in the Terminal.');
+      const code = await new Promise((resolve) => {
+        process.stdin.once('data', (data) => resolve(data.toString().trim()));
+      });
+
+      await page.type('input[data-cy-id="input"][id=":r4:"]', code);
+
+      const faName = 'bot';
+      await page.type('input[data-cy-id="input"][id=":r5:"]', faName);
+
+      const faDuration = '1 year';
+
+      // Trust Device Duration
+      await page.click('div[data-cy-id="select_target__content"]');
+
+      // Wait for the dropdown options to be visible and ensure it's fully loaded
+      await page.waitForSelector('p[data-cy-id="select_option__label"]', { visible: true, timeout: 5000 });
+
+      // Try selecting the option using different methods
+      await page.evaluate(() => {
+        const option = [...document.querySelectorAll('p[data-cy-id="select_option__label"]')].find(el => el.innerText.includes('1 year'));
+        if (option) {
+          option.click();
+        }
+      });
+
+      console.log(`Device trusted for: ${faDuration}`);
+
+      // Submit 2FA
+      await page.click('button[type="submit"][data-cy-id="button"]');
+
+      await page.waitForNavigation({ waitUntil: 'networkidle2' });
+
+      // Save cookies
+      const cookies = await page.cookies();
+      fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
+      console.log('Cookies saved.');
+
+      // Confirm if redirected to the desired URL
+      const currentURL = page.url();
+      if (currentURL === TARGET_URL) {
+        console.log('Monitoring SC Testing Chat.');
+      } else {
+        console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+      }
+      return; // Exit the function after successful login
     }
-  });
-
-  console.log(`Device trusted for: ${faDuration}`);
-
-  // Submit 2FA
-  await page.click('button[type="submit"][data-cy-id="button"]');
-
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-  // Save cookies
-  const cookies = await page.cookies();
-  fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
-  console.log('Cookies saved.');
-
-  // Confirm if redirected to the desired URL
-  const currentURL = page.url();
-  if (currentURL === TARGET_URL) {
-    console.log('Monitoring SC Testing Chat.');
-  } else {
-    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
   }
+
+  console.log('No Email input field found.');
 }
+
 
 async function periodicCheck() {
   try {
