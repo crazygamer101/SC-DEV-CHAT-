@@ -9,7 +9,7 @@ const TARGET_URL = 'https://robertsspaceindustries.com/spectrum/community/SC/lob
 const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const browser = await puppeteer.launch({ headless: true, defaultViewport: null });
   const page = await browser.newPage();
 
   const cookiesExist = fs.existsSync(COOKIES_PATH);
