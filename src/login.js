@@ -220,3 +220,4 @@ async function periodicCheck() {
 setInterval(periodicCheck, CHECK_INTERVAL);
 
 module.exports = login;
+

@@ -1,12 +1,12 @@
 // scraping.js
-const login = require('./login');
+const { startMonitoring } = require('./loginFunctions');
 const { updateDateTime, extractTextFromHTML, delay } = require('./helpers');
 const { loadScrapingData, saveScrapingData } = require('./fileOperations');
 const { getMessages, getMotd } = require('./scrapeFunctions');
 const { insertDocument } = require('./dataApiHelper');
 
 async function scraping(sendToDiscord, sendMotdToDiscord) {
-  const page = await login();
+  const page = await startMonitoring();
 
   if (!page) {
     console.error('Login function did not return a page object.');

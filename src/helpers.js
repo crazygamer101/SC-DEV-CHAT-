@@ -1,4 +1,6 @@
 // helpers.js
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 function updateDateTime() {
   const today = new Date();
   const date = (today.getMonth() + 1) + '-' + today.getDate() + '-' + today.getFullYear();
@@ -27,6 +29,11 @@ function extractTextFromHTML(html) {
   return textParts.join('');
 }
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Define the wait function to create a delay
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-module.exports = { updateDateTime, extractTextFromHTML, delay };
+//Login Helpers
+
+module.exports = { updateDateTime, extractTextFromHTML, delay, wait };
