@@ -18,7 +18,8 @@ async function startMonitoring() {
 }
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: true, defaultViewport: null });
+  const browser = await puppeteer.launch({ headless: true, defaultViewport: null }); // Make sure this is set to true
+
   const page = await browser.newPage();
 
   const cookiesExist = fs.existsSync(COOKIES_PATH);
