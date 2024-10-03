@@ -52,14 +52,14 @@ function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-//Login Helpers
+// Login Helpers
 async function rememberMe(page) {
   try {
     console.log('Checking for Remember Me checkbox...');
 
     // Wait for the checkbox to be present
     await page.waitForSelector('label[for=":r3:"]', { visible: true, timeout: 60000 });
-    console.log('box found')
+    console.log('Checkbox found');
 
     // Check if the checkbox is already checked
     const isChecked = await page.$eval('input[data-cy-id="__remember-me"]', el => el.checked);
@@ -125,9 +125,10 @@ async function periodicCheck(page) {
   }
 }
 
-async function waitForSelectorWithTimeout(page, selector, options = { visible: true, timeout: 10000 }) {
+async function waitForSelectorWithTimeout(page, selector, options = { timeout: 30000 }) {
   try {
     await page.waitForSelector(selector, options);
+    console.log(`Selector found: ${selector}`);
     return true;
   } catch (error) {
     console.error(`Failed to find selector: ${selector}`, error.message);
@@ -136,13 +137,29 @@ async function waitForSelectorWithTimeout(page, selector, options = { visible: t
 }
 
 async function handleLogin(page, usernameSelector, passwordSelector, username, password) {
+  // Validate inputs
+  if (!username) {
+    console.error('No username provided.');
+    return false;
+  }
+
+  if (!password) {
+    console.error('No password provided.');
+    return false;
+  }
+
   const usernameAvailable = await waitForSelectorWithTimeout(page, usernameSelector);
   const passwordAvailable = await waitForSelectorWithTimeout(page, passwordSelector);
 
   if (usernameAvailable && passwordAvailable) {
+    await page.click(usernameSelector); // Ensure the field is active
     await page.type(usernameSelector, username);
+    console.log('Username typed.');
+
+    await page.click(passwordSelector); // Ensure the field is active
     await page.type(passwordSelector, password);
-    console.log('Username and password typed.');
+    console.log('Password typed.');
+    
     return true;
   } else {
     console.error('Failed to find or type in username/password fields.');

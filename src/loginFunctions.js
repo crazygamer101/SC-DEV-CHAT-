@@ -1,10 +1,11 @@
 // loginFunctions.js
+require('dotenv').config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const { rememberMe, periodicCheck, waitForSelectorWithTimeout, handleLogin, saveCookies, checkNavigation, enter2FA, retry } = require('./helpers');
 
-const USERNAME = process.env.RSI_USERNAME;
-const PASSWORD = process.env.RSI_PASSWORD;
+const USERNAME = process.env.RSI_USERNAME || ''; // Default to empty string if not set
+const PASSWORD = process.env.RSI_PASSWORD || ''; // Default to empty string if not set
 const COOKIES_PATH = './localData/cookies.json';
 const TARGET_URL = 'https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230';
 const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
@@ -17,7 +18,7 @@ async function startMonitoring() {
 }
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const browser = await puppeteer.launch({ headless: true, defaultViewport: null });
   const page = await browser.newPage();
 
   const cookiesExist = fs.existsSync(COOKIES_PATH);
@@ -47,10 +48,15 @@ async function login() {
 // Refactored abbreviatedLogin function
 async function abbreviatedLogin(page) {
   console.log('Performing abbreviated login');
-  
+
+  await page.goto('https://robertsspaceindustries.com/connect?jumpto=/spectrum/community/SC/lobby/38230', { waitUntil: 'networkidle0' });
+
   if (!(await waitForSelectorWithTimeout(page, 'div[data-cy-id="checkbox__display"]'))) return page;
 
-  if (!(await handleLogin(page, 'input[type="text"]', 'input[type="password"]', USERNAME, PASSWORD))) return page;
+  const usernameSelector = 'div[data-cy-id="__email"] input[data-cy-id="input"]';
+  const passwordSelector = 'div[data-cy-id="__password"] input[data-cy-id="input"]';
+
+  if (!(await handleLogin(page, usernameSelector, passwordSelector, USERNAME, PASSWORD))) return page;
 
   await rememberMe(page);
 
@@ -70,7 +76,7 @@ async function performLogin(page) {
 
   if (!(await waitForSelectorWithTimeout(page, 'div[data-cy-id="checkbox__display"]'))) return page;
 
-  if (!(await handleLogin(page, 'input[type="text"]', 'input[type="password"]', USERNAME, PASSWORD))) return page;
+  if (!(await handleLogin(page, 'div[data-cy-id="__email"] input[data-cy-id="input"]', 'div[data-cy-id="__password"] input[data-cy-id="input"]', USERNAME, PASSWORD))) return page;
 
   await rememberMe(page);
   
@@ -87,6 +93,5 @@ async function performLogin(page) {
 
   return page;
 }
-
 
 module.exports = { login, startMonitoring };
