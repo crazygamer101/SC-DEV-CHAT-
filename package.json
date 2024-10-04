@@ -1,6 +1,6 @@
 {
   "name": "sc-dev-chat",
-  "version": "1.0.2b",
+  "version": "1.0.3",
   "description": "",
   "main": "src/bot.js",
   "scripts": {

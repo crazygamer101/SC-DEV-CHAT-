@@ -2,7 +2,7 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const { rememberMe, periodicCheck, waitForSelectorWithTimeout, handleLogin, saveCookies, checkNavigation, enter2FA, retry } = require('./helpers');
+const { rememberMe, periodicCheck, waitForSelectorWithTimeout, handleLogin, saveCookies, checkNavigation, enter2FA, } = require('./loginHelpers');
 
 const USERNAME = process.env.RSI_USERNAME || ''; // Default to empty string if not set
 const PASSWORD = process.env.RSI_PASSWORD || ''; // Default to empty string if not set

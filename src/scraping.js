@@ -1,4 +1,4 @@
-const { startMonitoring } = require('./loginFunctions');
+const { startMonitoring } = require('./login');
 const { updateDateTime, extractTextFromHTML, delay, retry, wait } = require('./helpers');
 const { loadScrapingData, saveScrapingData } = require('./fileOperations');
 const { getMessages, getMotd } = require('./scrapeFunctions');
