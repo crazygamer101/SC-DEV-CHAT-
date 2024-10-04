@@ -90,35 +90,35 @@ async function getMessages(page, lastMessageId) {
 
 async function getMotd(page) {
   const motd = await page.evaluate(() => {
-    const motdElement = document.querySelector(".lobby-message__wrapper");
+    const motdElement = document.querySelector('.lobby-message__wrapper');
     if (!motdElement) {
       return null;
     }
 
-    const titleElement = motdElement.querySelector(".lobby-message__title");
-    const timeElement = motdElement.querySelector(".lobby-message__informations"); // Scrape relative time ("2 hours ago")
-    const bodyElement = motdElement.querySelector(".lobby-message__body");
+    const titleElement = motdElement.querySelector('.lobby-message__title');
+    const timeElement = motdElement.querySelector('.lobby-message__informations'); // Scrape relative time
+    const bodyElement = motdElement.querySelector('.lobby-message__body');
 
     const title = titleElement ? titleElement.innerText : null;
-    const time = timeElement ? timeElement.innerText.trim() : null; // Scraped relative time ("2 hours ago")
+    const time = timeElement ? timeElement.innerText.trim() : null;
     const body = bodyElement ? bodyElement.innerText : null;
 
-    return { title, time, body }; // Returning full MOTD object
+    return { title, time, body };
   });
 
   if (motd && motd.time) {
     try {
-      const parsedDate = parseRelativeTime(motd.time); // Use helper function for relative time
+      const parsedDate = parseRelativeTime(motd.time);
 
       if (parsedDate) {
-        // Convert the parsed date to Discord timestamp format
+        // Use getDiscordTimestamp to format the date for Discord
         motd.time = getDiscordTimestamp(parsedDate);
       } else {
-        motd.time = "Invalid Time"; // Fallback for invalid time
+        motd.time = 'Invalid Time';
       }
     } catch (error) {
-      console.error("Error parsing MOTD time: ", error);
-      motd.time = "Invalid Time"; // Error handling
+      console.error('Error parsing MOTD time: ', error);
+      motd.time = 'Invalid Time';
     }
   }
 
