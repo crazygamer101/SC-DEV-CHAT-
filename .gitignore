@@ -1,5 +1,6 @@
 # environments
 .env
+.env.development
 
 # modules
 node_modules
