@@ -1,46 +1,42 @@
 // dataApiHelper.js
-const axios = require('axios');
+const { MongoClient } = require('mongodb');
 require('dotenv').config();
 
-const { MONGO_API_KEY, MONGO_API_URL } = process.env;
+const { MONGO_URI } = process.env;
 
-const headers = {
-  'Content-Type': 'application/json',
-  'api-key': MONGO_API_KEY,
-};
+let client;
+let db;
 
-async function insertDocument(collection, document) {
-  const url = `${MONGO_API_URL}/action/insertOne`;
-  const data = {
-    dataSource: 'sc-dev-chat-data', // Use your cluster name here
-    database: 'scraping',
-    collection,
-    document,
-  };
+async function connectToMongoDB() {
+  if (!client) {
+    client = new MongoClient(MONGO_URI);
+    await client.connect();
+    db = client.db('scraping'); // Specify your database name here
+  }
+  return db;
+}
 
+
+async function insertDocument(collectionName, document) {
   try {
-    const response = await axios.post(url, data, { headers });
-    return response.data;
+    const db = await connectToMongoDB();
+    const collection = db.collection(collectionName);
+    const result = await collection.insertOne(document);
+    return result;
   } catch (error) {
-    console.error('Error inserting document:', error.response.data);
+    console.error('Error inserting document:', error.message);
     throw error;
   }
 }
 
-async function findDocuments(collection, filter = {}) {
-  const url = `${MONGO_API_URL}/action/find`;
-  const data = {
-    dataSource: 'sc-dev-chat-data', // Use your cluster name here
-    database: 'scraping',
-    collection,
-    filter,
-  };
-
+async function findDocuments(collectionName, filter = {}) {
   try {
-    const response = await axios.post(url, data, { headers });
-    return response.data.documents;
+    const db = await connectToMongoDB();
+    const collection = db.collection(collectionName);
+    const documents = await collection.find(filter).toArray();
+    return documents;
   } catch (error) {
-    console.error('Error finding documents:', error.response.data);
+    console.error('Error finding documents:', error.message);
     throw error;
   }
 }
