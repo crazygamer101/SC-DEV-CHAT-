@@ -1,27 +1,12 @@
-const { Client, GatewayIntentBits } = require('discord.js');
 const { getAllMotdIds, getAllMessageIds } = require('./dataApiHelper'); // Importing the new functions
-require('dotenv').config();
+const { fetchChannelsByIds } = require('./helpers'); // Import the fetchChannelsByIds helper function
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
-});
-
-async function sendToDiscord(message) {
+async function sendToDiscord(client, message) {
   try {
     const motdChannelIds = await getAllMotdIds();
-    const channels = await Promise.all(motdChannelIds.map(id => client.channels.fetch(id)));
+    const channels = await fetchChannelsByIds(client, motdChannelIds);
 
     for (const channel of channels) {
-      if (!channel) {
-        console.error('No MOTD channel found!');
-        continue;
-      }
-
       const formattedMessage = `
 # [${message.nickname}](<https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230/message/${message.id}>)
 *${message.time}*
@@ -36,17 +21,12 @@ async function sendToDiscord(message) {
   }
 }
 
-async function sendMotdToDiscord(motd) {
+async function sendMotdToDiscord(client, motd) {
   try {
     const messagesChannelIds = await getAllMessageIds();
-    const channels = await Promise.all(messagesChannelIds.map(id => client.channels.fetch(id)));
+    const channels = await fetchChannelsByIds(client, messagesChannelIds);
 
     for (const channel of channels) {
-      if (!channel) {
-        console.error('No messages channel found!');
-        continue;
-      }
-
       const formattedMotd = `
 # [${motd.title}](<https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230>)
 *${motd.time}*
@@ -60,8 +40,6 @@ async function sendMotdToDiscord(motd) {
     throw error;
   }
 }
-
-client.login(process.env.DISCORD_TOKEN);
 
 module.exports = {
   sendToDiscord,

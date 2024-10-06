@@ -20,7 +20,7 @@ async function handleInteraction(interaction) {
       const motdChannel = options.getChannel('channel');
       try {
         await saveMotdChannel(guild.id, motdChannel.id);
-        await interaction.reply(`MOTD channel set to ${motdChannel.name}.`);
+        await interaction.reply(`${motdChannel.name} will now recieve MotD updates from SC Testing Chat.`);
       } catch (error) {
         console.error(`Error setting MOTD channel: ${error.message}`);
         await interaction.reply(`Failed to set MOTD channel: ${error.message}`);
@@ -31,7 +31,7 @@ async function handleInteraction(interaction) {
       const motdChannelToRemove = options.getChannel('channel');
       try {
         await removeMotdChannel(guild.id, motdChannelToRemove.id);
-        await interaction.reply(`MOTD channel removed.`);
+        await interaction.reply(`${motdChannel.name} will no longer recieve MotD updates from SC Testing Chat.`);
       } catch (error) {
         console.error(`Error removing MOTD channel: ${error.message}`);
         await interaction.reply(`Failed to remove MOTD channel: ${error.message}`);
@@ -42,7 +42,7 @@ async function handleInteraction(interaction) {
       const messagesChannel = options.getChannel('channel');
       try {
         await saveMessagesChannel(guild.id, messagesChannel.id);
-        await interaction.reply(`Messages channel set to ${messagesChannel.name}.`);
+        await interaction.reply(`${messagesChannel.name} will now recieve dev messages posted in SC Testing Chat.`);
       } catch (error) {
         console.error(`Error setting messages channel: ${error.message}`);
         await interaction.reply(`Failed to set messages channel: ${error.message}`);
@@ -53,7 +53,7 @@ async function handleInteraction(interaction) {
       const messagesChannelToRemove = options.getChannel('channel');
       try {
         await removeMessagesChannel(guild.id, messagesChannelToRemove.id);
-        await interaction.reply(`Messages channel removed.`);
+        await interaction.reply(`${messagesChannel.name} will no longer recieve dev messages posted in SC Testing Chat.`);
       } catch (error) {
         console.error(`Error removing messages channel: ${error.message}`);
         await interaction.reply(`Failed to remove messages channel: ${error.message}`);
@@ -64,7 +64,7 @@ async function handleInteraction(interaction) {
       try {
         await removeAllChannels(guild.id);
         console.log(`Successfully removed all channels for guildId: ${guild.id}`);
-        await interaction.reply('All update channels have been reset.');
+        await interaction.reply('No channels are recieving updates in this server.');
       } catch (error) {
         console.error(`Error resetting all update channels: ${error.message}`);
         await interaction.reply(`There was an error resetting all of the update channels: ${error.message}`);

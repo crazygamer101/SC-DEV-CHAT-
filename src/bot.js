@@ -16,7 +16,7 @@ const client = new Client({
 client.on('ready', () => {
   console.log(`✔ ${client.user.tag} is Online`);
   // Start the scraping process after the bot is ready
-  scraping(sendToDiscord, sendMotdToDiscord);
+  scraping(sendToDiscord.bind(null, client), sendMotdToDiscord.bind(null, client));
 });
 
 client.on('interactionCreate', async (interaction) => {

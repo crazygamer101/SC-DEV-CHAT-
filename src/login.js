@@ -1,14 +1,25 @@
+// loginFunctions.js
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const { rememberMe, periodicCheck, waitForSelectorWithTimeout, handleLogin, saveCookies, checkNavigation, enter2FA, } = require('./loginHelpers');
 
-const USERNAME = process.env.RSI_USERNAME;
-const PASSWORD = process.env.RSI_PASSWORD;
+const USERNAME = process.env.RSI_USERNAME || ''; // Default to empty string if not set
+const PASSWORD = process.env.RSI_PASSWORD || ''; // Default to empty string if not set
 const COOKIES_PATH = './localData/cookies.json';
 const TARGET_URL = 'https://robertsspaceindustries.com/spectrum/community/SC/lobby/38230';
+const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+async function startMonitoring() {
+  const page = await login(); // Perform login and get the page object
+  setInterval(() => periodicCheck(page), CHECK_INTERVAL); // Call periodicCheck with the page object
+
+  return page;
+}
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: false, defaultViewport: null });
+  const browser = await puppeteer.launch({ headless: true, defaultViewport: null }); // Make sure this is set to true
+
   const page = await browser.newPage();
 
   const cookiesExist = fs.existsSync(COOKIES_PATH);
@@ -33,76 +44,55 @@ async function login() {
   }
 
   return page;
-};
+}
 
+// Refactored abbreviatedLogin function
 async function abbreviatedLogin(page) {
-  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
-  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
+  console.log('Performing abbreviated login');
+
+  await page.goto('https://robertsspaceindustries.com/connect?jumpto=/spectrum/community/SC/lobby/38230', { waitUntil: 'networkidle0' });
+
+  if (!(await waitForSelectorWithTimeout(page, 'div[data-cy-id="checkbox__display"]'))) return page;
+
+  const usernameSelector = 'div[data-cy-id="__email"] input[data-cy-id="input"]';
+  const passwordSelector = 'div[data-cy-id="__password"] input[data-cy-id="input"]';
+
+  if (!(await handleLogin(page, usernameSelector, passwordSelector, USERNAME, PASSWORD))) return page;
+
+  await rememberMe(page);
+
   await page.click('button[type="submit"][data-cy-id="__submit-button"]');
+  console.log('Submit button clicked.');
 
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-  // Confirm if redirected to the desired URL
-  const currentURL = page.url();
-  if (currentURL === TARGET_URL) {
-    console.log('Monitoring SC Testing Chat.');
-  } else {
-    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+  if (await checkNavigation(page, TARGET_URL)) {
+    await saveCookies(page, COOKIES_PATH);
   }
+
+  return page;
 }
 
+// Refactored performLogin function
 async function performLogin(page) {
-  await page.type('input[data-cy-id="input"][id=":r1:"]', USERNAME);
-  await page.type('input[data-cy-id="input"][id=":r2:"]', PASSWORD);
+  console.log('Performing full login');
+
+  if (!(await waitForSelectorWithTimeout(page, 'div[data-cy-id="checkbox__display"]'))) return page;
+
+  if (!(await handleLogin(page, 'div[data-cy-id="__email"] input[data-cy-id="input"]', 'div[data-cy-id="__password"] input[data-cy-id="input"]', USERNAME, PASSWORD))) return page;
+
+  await rememberMe(page);
+  
   await page.click('button[type="submit"][data-cy-id="__submit-button"]');
+  console.log('Submit button clicked.');
 
-  await page.waitForSelector('input[data-cy-id="input"][id=":r4:"]', { visible: true });
+  if (!(await waitForSelectorWithTimeout(page, 'button[data-cy-id="button"][type="submit"]'))) return page;
 
-  console.log('Please enter your 2FA in the Terminal.');
-  const code = await new Promise((resolve) => {
-    process.stdin.once('data', (data) => resolve(data.toString().trim()));
-  });
+  await enter2FA(page);
 
-  await page.type('input[data-cy-id="input"][id=":r4:"]', code);
-
-  const faName = 'bot';
-  await page.type('input[data-cy-id="input"][id=":r5:"]', faName);
-
-  const faDuration = '1 year';
-
-  // Trust Device Duration
-  await page.click('div[data-cy-id="select_target__content"]');
-
-  // Wait for the dropdown options to be visible and ensure it's fully loaded
-  await page.waitForSelector('p[data-cy-id="select_option__label"]', { visible: true, timeout: 5000 });
-
-  // Try selecting the option using different methods
-  await page.evaluate(() => {
-    const option = [...document.querySelectorAll('p[data-cy-id="select_option__label"]')].find(el => el.innerText.includes('1 year'));
-    if (option) {
-      option.click();
-    }
-  });
-
-  console.log(`Device trusted for: ${faDuration}`);
-
-  // Submit 2FA
-  await page.click('button[type="submit"][data-cy-id="button"]');
-
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-  // Save cookies
-  const cookies = await page.cookies();
-  fs.writeFileSync(COOKIES_PATH, JSON.stringify(cookies, null, 2));
-  console.log('Cookies saved.');
-
-  // Confirm if redirected to the desired URL
-  const currentURL = page.url();
-  if (currentURL === TARGET_URL) {
-    console.log('Monitoring SC Testing Chat.');
-  } else {
-    console.log('Did not redirect to the expected URL. Current URL:', currentURL);
+  if (await checkNavigation(page, TARGET_URL)) {
+    await saveCookies(page, COOKIES_PATH);
   }
+
+  return page;
 }
 
-module.exports = login;
+module.exports = { login, startMonitoring };
