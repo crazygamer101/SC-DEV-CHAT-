@@ -1,1 +1,1 @@
-This Folder will be where local and sensitive data is stored.
+This is where local data can be stored that does not need to be posted in git.git status
