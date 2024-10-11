@@ -95,17 +95,23 @@ async function rememberMe(page) {
   try {
     console.log('Checking for Remember Me checkbox...');
 
-    // Wait for the checkbox container to be present
+    // Wait for the checkbox container to be present and visible
     await page.waitForSelector('div[data-cy-id="__remember-me"]', { visible: true, timeout: 60000 });
     console.log('Checkbox found');
+
+    // Scroll the checkbox into view to make sure it's clickable
+    await page.evaluate(() => {
+      const checkboxElement = document.querySelector('div[data-cy-id="__remember-me"]');
+      checkboxElement.scrollIntoView();
+    });
 
     // Check if the checkbox is already checked
     const isChecked = await page.$eval('input[data-cy-id="__remember-me"]', el => el.checked);
     console.log(`Remember Me checkbox checked: ${isChecked}`);
 
-    // If the checkbox is not checked, click the checkbox to toggle it
+    // If the checkbox is not checked, click the associated label to toggle it
     if (!isChecked) {
-      await page.click('input[data-cy-id="__remember-me"]'); // Click the checkbox directly
+      await page.click('label[for]:has(input[data-cy-id="__remember-me"])'); // Click the label associated with the checkbox
       console.log('Remember Me checkbox clicked.');
     } else {
       console.log('Remember Me checkbox was already checked, no action taken.');
@@ -114,6 +120,7 @@ async function rememberMe(page) {
     console.error('Error in rememberMe function:', error.message);
   }
 }
+
 
   
 async function periodicCheck(page) {
