@@ -92,28 +92,29 @@ async function handleLogin(page, usernameSelector, passwordSelector, username, p
 }
 
 async function rememberMe(page) {
-    try {
-      console.log('Checking for Remember Me checkbox...');
-  
-      // Wait for the checkbox to be present
-      await page.waitForSelector('label[for=":r3:"]', { visible: true, timeout: 60000 });
-      console.log('Checkbox found');
-  
-      // Check if the checkbox is already checked
-      const isChecked = await page.$eval('input[data-cy-id="__remember-me"]', el => el.checked);
-      console.log(`Remember Me checkbox checked: ${isChecked}`);
-  
-      // If the checkbox is not checked, click the label to toggle it
-      if (!isChecked) {
-        await page.click('label[for=":r3:"]'); // Click the label associated with the checkbox
-        console.log('Remember Me checkbox clicked.');
-      } else {
-        console.log('Remember Me checkbox was already checked, no action taken.');
-      }
-    } catch (error) {
-      console.error('Error in rememberMe function:', error.message);
+  try {
+    console.log('Checking for Remember Me checkbox...');
+
+    // Wait for the checkbox container to be present
+    await page.waitForSelector('div[data-cy-id="__remember-me"]', { visible: true, timeout: 60000 });
+    console.log('Checkbox found');
+
+    // Check if the checkbox is already checked
+    const isChecked = await page.$eval('input[data-cy-id="__remember-me"]', el => el.checked);
+    console.log(`Remember Me checkbox checked: ${isChecked}`);
+
+    // If the checkbox is not checked, click the checkbox to toggle it
+    if (!isChecked) {
+      await page.click('input[data-cy-id="__remember-me"]'); // Click the checkbox directly
+      console.log('Remember Me checkbox clicked.');
+    } else {
+      console.log('Remember Me checkbox was already checked, no action taken.');
     }
+  } catch (error) {
+    console.error('Error in rememberMe function:', error.message);
+  }
 }
+
   
 async function periodicCheck(page) {
     try {
