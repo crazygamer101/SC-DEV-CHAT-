@@ -33,7 +33,7 @@ async function enter2FA(page) {
   const currentURL = page.url();
 
   if (currentURL === targetURL) {
-    console.log('Successfully navigated to target URL.');
+    console.log('Successfully navigated to SC Testing Chat.');
     return true;
   } else {
     console.error('Did not redirect to the expected URL:', currentURL);
@@ -117,19 +117,15 @@ async function rememberMe(page) {
   
 async function periodicCheck(page) {
     try {
-        console.log('Starting periodic session check.');
-
         // Evaluate the lobby name on the current page
         const header = await page.evaluate(() => {
         const lobbyNameElement = document.querySelector('.lobby-name');
         return lobbyNameElement ? lobbyNameElement.textContent.trim() : null;
         });
 
-        console.log(`Lobby name found: ${header}`);
-
         // Check if the session has timed out or is still active
         if (header !== '#sc-testing-chat') {
-        console.log('Session timed out, refreshing page.');
+        console.warn('Session timed out, refreshing page.');
         
         await page.reload({ waitUntil: ['networkidle0'] });
         console.log('Page reloaded, checking session again.');
@@ -144,7 +140,7 @@ async function periodicCheck(page) {
 
         // If the session is still invalid after refresh, attempt login
         if (refreshedHeader !== '#sc-testing-chat') {
-            console.log('Session still invalid after refresh. Logging in again.');
+            console.warn('Session still invalid after refresh. Logging in again.');
             
             page = await performLogin(page); // Ensure the new page object is assigned
             if (page) {
@@ -155,9 +151,7 @@ async function periodicCheck(page) {
         } else {
             console.log('Successfully reconnected to Testing Chat after refresh.');
         }
-        } else {
-        console.log('Session is still valid, monitoring Testing Chat.');
-        }
+        } 
     } catch (error) {
         console.error('Error during periodic session check:', error.message);
     }

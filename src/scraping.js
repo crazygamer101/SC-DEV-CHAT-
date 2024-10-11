@@ -3,6 +3,7 @@ const { updateDateTime, extractTextFromHTML, delay, retry, wait } = require('./h
 const { loadScrapingData, saveScrapingData } = require('./fileOperations');
 const { getMessages, getMotd } = require('./scrapeFunctions');
 const { insertDocument } = require('./dataApiHelper');
+const { periodicCheck } = require('./loginHelpers');
 
 async function scraping(sendToDiscord, sendMotdToDiscord) {
   let page = await startMonitoring();
@@ -24,6 +25,8 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
         page = await startMonitoring();
         if (!page) throw new Error('Failed to restart monitoring');
       }
+
+      await periodicCheck(page);
 
       // Retry getMessages and getMotd in case of navigation issues or errors
       const messages = await retry(async () => await getMessages(page, lastMessageId));
