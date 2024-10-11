@@ -6,7 +6,7 @@ async function getMessages(page, lastMessageId) {
     const messageList = document.querySelectorAll(".message-item.status-default");
 
     return Array.from(messageList).map((message) => {
-      const id = message.getAttribute("data-message-id");
+      const messageId = message.getAttribute("data-message-id");
       const nicknameElement = message.querySelector(".displayname .nickname");
       const timeElement = message.querySelector(".time > span"); // Scrape the time
       const bodyElement = message.querySelector(".body > div");
@@ -22,9 +22,9 @@ async function getMessages(page, lastMessageId) {
         (messageColor === 'rgb(222, 195, 66)' ||
           messageColor === 'rgb(125, 103, 233)' ||
           messageColor === 'rgb(255, 98, 98)') &&
-        id > lastMessageId
+        messageId > lastMessageId
       ) {
-        return { id, nickname, time, body };
+        return { messageId, nickname, time, body };
       } else {
         return null;
       }
@@ -36,7 +36,7 @@ async function getMessages(page, lastMessageId) {
     if (message && message.time) {
       try {
         // Log the raw time for debugging
-        console.log(`Raw scraped time for message ID ${message.id}: '${message.time}'`);
+        console.log(`Raw scraped time for message ID ${message.messageId}: '${message.time}'`);
 
         // Remove any non-digit characters except colon
         const cleanTime = message.time.replace(/[^\d:]/g, '').trim();
@@ -49,7 +49,7 @@ async function getMessages(page, lastMessageId) {
           const minutes = parseInt(minutesStr, 10);
 
           // Log parsed hours and minutes
-          console.log(`Parsed time for message ID ${message.id}: hours=${hours}, minutes=${minutes}`);
+          console.log(`Parsed time for message ID ${message.messageId}: hours=${hours}, minutes=${minutes}`);
 
           // Create a new Date object with the current date and scraped time
           const now = new Date();
@@ -71,15 +71,15 @@ async function getMessages(page, lastMessageId) {
           // Format the timestamp for Discord
           message.time = getDiscordTimestamp(messageDate);
         } else {
-          console.warn(`Invalid time format for message ID ${message.id}: '${cleanTime}'`);
+          console.warn(`Invalid time format for message ID ${message.messageId}: '${cleanTime}'`);
           message.time = "Invalid Time";
         }
       } catch (error) {
-        console.error(`Error parsing time for message ID ${message.id}:`, error);
+        console.error(`Error parsing time for message ID ${message.messageId}:`, error);
         message.time = "Invalid Time";
       }
     } else {
-      console.warn(`Time missing for message ID ${message.id}`);
+      console.warn(`Time missing for message ID ${message.messageId}`);
       message.time = "Invalid Time";
     }
     return message;
