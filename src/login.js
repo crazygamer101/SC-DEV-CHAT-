@@ -18,7 +18,7 @@ async function startMonitoring() {
 }
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: true, defaultViewport: null }); // Make sure this is set to true
+  const browser = await puppeteer.launch({ headless: ture, defaultViewport: null }); // Make sure this is set to true
 
   const page = await browser.newPage();
 

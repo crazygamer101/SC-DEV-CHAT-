@@ -29,8 +29,8 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
       await periodicCheck(page);
 
       // Retry getMessages and getMotd in case of navigation issues or errors
-      const messages = await retry(async () => await getMessages(page, lastMessageId));
-      const motd = await retry(async () => await getMotd(page));
+      const messages = await getMessages(page, lastMessageId);
+      const motd = await getMotd(page);
 
       let dataChanged = false;
 
