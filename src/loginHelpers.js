@@ -120,50 +120,7 @@ async function rememberMe(page) {
     console.error('Error in rememberMe function:', error.message);
   }
 }
-
-
   
-async function periodicCheck(page) {
-    try {
-        // Evaluate the lobby name on the current page
-        const header = await page.evaluate(() => {
-        const lobbyNameElement = document.querySelector('.lobby-name');
-        return lobbyNameElement ? lobbyNameElement.textContent.trim() : null;
-        });
-
-        // Check if the session has timed out or is still active
-        if (header !== '#sc-testing-chat') {
-        console.warn('Session timed out, refreshing page.');
-        
-        await page.reload({ waitUntil: ['networkidle0'] });
-        console.log('Page reloaded, checking session again.');
-
-        // Check the lobby name again after page reload
-        const refreshedHeader = await page.evaluate(() => {
-            const lobbyNameElement = document.querySelector('.lobby-name');
-            return lobbyNameElement ? lobbyNameElement.textContent.trim() : null;
-        });
-
-        console.log(`Lobby name after refresh: ${refreshedHeader}`);
-
-        // If the session is still invalid after refresh, attempt login
-        if (refreshedHeader !== '#sc-testing-chat') {
-            console.warn('Session still invalid after refresh. Logging in again.');
-            
-            page = await performLogin(page); // Ensure the new page object is assigned
-            if (page) {
-            console.log('Re-login successful, new page object assigned.');
-            } else {
-            console.error('Re-login failed, page object was not returned.');
-            }
-        } else {
-            console.log('Successfully reconnected to Testing Chat after refresh.');
-        }
-        } 
-    } catch (error) {
-        console.error('Error during periodic session check:', error.message);
-    }
-}
   
 async function waitForSelectorWithTimeout(page, selector, options = { timeout: 30000 }) {
     try {
@@ -178,7 +135,6 @@ async function waitForSelectorWithTimeout(page, selector, options = { timeout: 3
 
 module.exports = {
     rememberMe,
-    periodicCheck,
     waitForSelectorWithTimeout,
     handleLogin,
     saveCookies,

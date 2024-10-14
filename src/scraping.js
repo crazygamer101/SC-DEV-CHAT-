@@ -1,9 +1,8 @@
-const { startMonitoring } = require('./login');
+const { startMonitoring, periodicCheck } = require('./login');
 const { updateDateTime, extractTextFromHTML, delay, retry, wait } = require('./helpers');
 const { loadScrapingData, saveScrapingData } = require('./fileOperations');
 const { getMessages, getMotd } = require('./scrapeFunctions');
 const { insertDocument } = require('./dataApiHelper');
-const { periodicCheck } = require('./loginHelpers');
 
 async function scraping(sendToDiscord, sendMotdToDiscord) {
   let page = await startMonitoring();

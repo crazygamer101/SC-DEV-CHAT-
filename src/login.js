@@ -2,7 +2,7 @@
 require('dotenv').config();
 const puppeteer = require('puppeteer');
 const fs = require('fs');
-const { rememberMe, periodicCheck, waitForSelectorWithTimeout, handleLogin, saveCookies, checkNavigation, enter2FA, } = require('./loginHelpers');
+const { rememberMe, waitForSelectorWithTimeout, handleLogin, saveCookies, checkNavigation, enter2FA, } = require('./loginHelpers');
 
 const USERNAME = process.env.RSI_USERNAME || ''; // Default to empty string if not set
 const PASSWORD = process.env.RSI_PASSWORD || ''; // Default to empty string if not set
@@ -18,7 +18,7 @@ async function startMonitoring() {
 }
 
 async function login() {
-  const browser = await puppeteer.launch({ headless: ture, defaultViewport: null }); // Make sure this is set to true
+  const browser = await puppeteer.launch({ headless: true, defaultViewport: null }); // Make sure this is set to true
 
   const page = await browser.newPage();
 
@@ -95,4 +95,46 @@ async function performLogin(page) {
   return page;
 }
 
-module.exports = { login, startMonitoring };
+async function periodicCheck(page) {
+  try {
+      // Evaluate the lobby name on the current page
+      const header = await page.evaluate(() => {
+      const lobbyNameElement = document.querySelector('.lobby-name');
+      return lobbyNameElement ? lobbyNameElement.textContent.trim() : null;
+      });
+
+      // Check if the session has timed out or is still active
+      if (header !== '#sc-testing-chat') {
+      console.warn('Session timed out, refreshing page.');
+      
+      await page.reload({ waitUntil: ['networkidle0'] });
+      console.log('Page reloaded, checking session again.');
+
+      // Check the lobby name again after page reload
+      const refreshedHeader = await page.evaluate(() => {
+          const lobbyNameElement = document.querySelector('.lobby-name');
+          return lobbyNameElement ? lobbyNameElement.textContent.trim() : null;
+      });
+
+      console.log(`Lobby name after refresh: ${refreshedHeader}`);
+
+      // If the session is still invalid after refresh, attempt login
+      if (refreshedHeader !== '#sc-testing-chat') {
+          console.warn('Session still invalid after refresh. Logging in again.');
+          
+          page = await performLogin(page); // Ensure the new page object is assigned
+          if (page) {
+          console.log('Re-login successful, new page object assigned.');
+          } else {
+          console.error('Re-login failed, page object was not returned.');
+          }
+      } else {
+          console.log('Successfully reconnected to Testing Chat after refresh.');
+      }
+      } 
+  } catch (error) {
+      console.error('Error during periodic session check:', error.message);
+  }
+}
+
+module.exports = { login, startMonitoring, performLogin, periodicCheck };
