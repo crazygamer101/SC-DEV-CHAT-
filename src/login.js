@@ -12,7 +12,7 @@ const CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 async function startMonitoring() {
   const page = await login(); // Perform login and get the page object
-  setInterval(() => periodicCheck(page), CHECK_INTERVAL); // Call periodicCheck with the page object
+  // Removed setInterval since periodicCheck is now called in the scraping loop every 30 seconds
 
   return page;
 }

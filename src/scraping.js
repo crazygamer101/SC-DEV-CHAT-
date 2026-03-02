@@ -4,7 +4,7 @@ const { loadScrapingData, saveScrapingData } = require('./fileOperations');
 const { getMessages, getMotd } = require('./scrapeFunctions');
 const { insertDocument } = require('./dataApiHelper');
 
-async function scraping(sendToDiscord, sendMotdToDiscord) {
+async function scraping(sendToDiscord, sendMotdToDiscord, updateBotStats) {
   let page = await startMonitoring();
 
   if (!page) {
@@ -17,65 +17,111 @@ async function scraping(sendToDiscord, sendMotdToDiscord) {
   let { lastMessageId = '', lastMotdBody = '' } = await loadScrapingData();
 
   while (true) {
+    const scrapeStartTime = Date.now();
+
     try {
-      // Check if the page is still attached and refresh if necessary
-      if (page.isClosed()) {
-        console.warn('Page is closed, restarting monitoring...');
-        page = await startMonitoring();
-        if (!page) throw new Error('Failed to restart monitoring');
-      }
+      // Add timeout to entire scraping cycle (25 seconds to allow for processing time)
+      await Promise.race([
+        (async () => {
+          // Check if the page is still attached and refresh if necessary
+          if (page.isClosed()) {
+            console.warn('Page is closed, restarting monitoring...');
+            page = await startMonitoring();
+            if (!page) throw new Error('Failed to restart monitoring');
+          }
 
-      await periodicCheck(page);
+          await periodicCheck(page);
 
-      // Retry getMessages and getMotd in case of navigation issues or errors
-      const messages = await getMessages(page, lastMessageId);
-      const motd = await getMotd(page);
+          // Retry getMessages and getMotd in case of navigation issues or errors
+          let messages = [];
+          let motd = null;
 
-      let dataChanged = false;
+          try {
+            messages = await getMessages(page, lastMessageId);
+          } catch (error) {
+            console.error('Error getting messages:', error.message);
+            messages = []; // Continue with empty messages
+          }
 
-      for (const message of messages) {
-        message.body = extractTextFromHTML(message.body);
-        console.log(message);
+          try {
+            motd = await getMotd(page);
+          } catch (error) {
+            console.error('Error getting MOTD:', error.message);
+            motd = null; // Continue without MOTD
+          }
 
-        lastMessageId = message.id;
+          let dataChanged = false;
 
-        // Save message to MongoDB in 'messages' collection
-        await insertDocument('messages', message);
+          for (const message of messages) {
+            message.body = extractTextFromHTML(message.body);
+            console.log(message);
 
-        await sendToDiscord(message);
-        dataChanged = true;
-      }
+            lastMessageId = message.id;
 
-      if (motd && motd.body !== lastMotdBody) {
-        console.log(motd);
+            try {
+              // Save message to MongoDB in 'messages' collection with timeout
+              await insertDocument('messages', message);
+              await sendToDiscord(message);
+              dataChanged = true;
+            } catch (error) {
+              console.error('Error saving/sending message:', error.message);
+              // Continue processing other messages even if one fails
+            }
+          }
 
-        // Save MOTD to MongoDB in 'motd' collection
-        await insertDocument('motd', motd);
+          if (motd && motd.body !== lastMotdBody) {
+            console.log(motd);
 
-        await sendMotdToDiscord(motd);
-        lastMotdBody = motd.body;
-        dataChanged = true;
-      }
+            try {
+              // Save MOTD to MongoDB in 'motd' collection with timeout
+              await insertDocument('motd', motd);
+              await sendMotdToDiscord(motd);
+              lastMotdBody = motd.body;
+              dataChanged = true;
+            } catch (error) {
+              console.error('Error saving/sending MOTD:', error.message);
+              // Continue even if MOTD save/send fails
+            }
+          }
 
-      if (dataChanged) {
-        await saveScrapingData({ lastMessageId, lastMotdBody });
-      }
+          if (dataChanged) {
+            await saveScrapingData({ lastMessageId, lastMotdBody });
+          }
 
-      console.log(`Scrape ended at ${updateDateTime()}`);
+          // Update bot statistics
+          updateBotStats(updateDateTime());
+
+          console.log(`Scrape ended at ${updateDateTime()}`);
+        })(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Scraping cycle timeout - restarting')), 25000)
+        )
+      ]);
 
     } catch (error) {
       // Log errors and continue the loop after a delay
       console.error(`Scraping error: ${error.message}`);
 
-      if (error.message.includes('detached Frame')) {
-        console.warn('Frame is detached, refreshing the page...');
-        page = await startMonitoring();  // Restart the page
-        if (!page) throw new Error('Failed to restart monitoring after frame detachment');
+      if (error.message.includes('detached Frame') || error.message.includes('Scraping cycle timeout')) {
+        console.warn('Restarting monitoring due to error...');
+        try {
+          page = await startMonitoring();  // Restart the page
+          if (page) {
+            console.log('Monitoring restarted successfully');
+          } else {
+            console.error('Failed to restart monitoring');
+          }
+        } catch (restartError) {
+          console.error('Error restarting monitoring:', restartError.message);
+        }
       }
     }
 
-    // Wait for 30 seconds before the next scrape cycle
-    await delay(30000);
+    const scrapeDuration = Date.now() - scrapeStartTime;
+    const waitTime = Math.max(5000, 30000 - scrapeDuration); // Minimum 5 second wait, maximum 30 seconds
+
+    console.log(`Waiting ${waitTime}ms before next scrape cycle...`);
+    await delay(waitTime);
   }
 }
 

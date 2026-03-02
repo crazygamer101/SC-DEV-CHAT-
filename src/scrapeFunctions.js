@@ -2,34 +2,39 @@
 const { parseRelativeTime, getDiscordTimestamp } = require('./helpers');
 
 async function getMessages(page, lastMessageId) {
-  const scrapedMessages = await page.evaluate((lastMessageId) => {
-    const messageList = document.querySelectorAll(".message-item.status-default");
+  const scrapedMessages = await Promise.race([
+    page.evaluate((lastMessageId) => {
+      const messageList = document.querySelectorAll(".message-item.status-default");
 
-    return Array.from(messageList).map((message) => {
-      const messageId = message.getAttribute("data-message-id");
-      const nicknameElement = message.querySelector(".displayname .nickname");
-      const timeElement = message.querySelector(".time > span"); // Scrape the time
-      const bodyElement = message.querySelector(".body > div");
+      return Array.from(messageList).map((message) => {
+        const messageId = message.getAttribute("data-message-id");
+        const nicknameElement = message.querySelector(".displayname .nickname");
+        const timeElement = message.querySelector(".time > span"); // Scrape the time
+        const bodyElement = message.querySelector(".body > div");
 
-      const nickname = nicknameElement ? nicknameElement.innerText : null;
-      const time = timeElement ? timeElement.innerText.trim() : null; // Scraped time in HH:MM format
-      const body = bodyElement ? bodyElement.innerHTML : null;
+        const nickname = nicknameElement ? nicknameElement.innerText : null;
+        const time = timeElement ? timeElement.innerText.trim() : null; // Scraped time in HH:MM format
+        const body = bodyElement ? bodyElement.innerHTML : null;
 
-      const displayNameElement = message.querySelector(".displayname");
-      const messageColor = displayNameElement ? getComputedStyle(displayNameElement).color : null;
+        const displayNameElement = message.querySelector(".displayname");
+        const messageColor = displayNameElement ? getComputedStyle(displayNameElement).color : null;
 
-      if (
-        (messageColor === 'rgb(222, 195, 66)' ||
-          messageColor === 'rgb(125, 103, 233)' ||
-          messageColor === 'rgb(255, 98, 98)') &&
-        messageId > lastMessageId
-      ) {
-        return { messageId, nickname, time, body };
-      } else {
-        return null;
-      }
-    }).filter((message) => message !== null);
-  }, lastMessageId);
+        if (
+          (messageColor === 'rgb(222, 195, 66)' ||
+            messageColor === 'rgb(125, 103, 233)' ||
+            messageColor === 'rgb(255, 98, 98)') &&
+          messageId > lastMessageId
+        ) {
+          return { messageId, nickname, time, body };
+        } else {
+          return null;
+        }
+      }).filter((message) => message !== null);
+    }, lastMessageId),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Page evaluate timeout for getMessages')), 15000)
+    )
+  ]);
 
   // Process messages to calculate exact time
   const formattedMessages = scrapedMessages.map((message) => {
@@ -89,22 +94,27 @@ async function getMessages(page, lastMessageId) {
 }
 
 async function getMotd(page) {
-  const motd = await page.evaluate(() => {
-    const motdElement = document.querySelector('.lobby-message__wrapper');
-    if (!motdElement) {
-      return null;
-    }
+  const motd = await Promise.race([
+    page.evaluate(() => {
+      const motdElement = document.querySelector('.lobby-message__wrapper');
+      if (!motdElement) {
+        return null;
+      }
 
-    const titleElement = motdElement.querySelector('.lobby-message__title');
-    const timeElement = motdElement.querySelector('.lobby-message__informations'); // Scrape relative time
-    const bodyElement = motdElement.querySelector('.lobby-message__body');
+      const titleElement = motdElement.querySelector('.lobby-message__title');
+      const timeElement = motdElement.querySelector('.lobby-message__informations'); // Scrape relative time
+      const bodyElement = motdElement.querySelector('.lobby-message__body');
 
-    const title = titleElement ? titleElement.innerText : null;
-    const time = timeElement ? timeElement.innerText.trim() : null;
-    const body = bodyElement ? bodyElement.innerText : null;
+      const title = titleElement ? titleElement.innerText : null;
+      const time = timeElement ? timeElement.innerText.trim() : null;
+      const body = bodyElement ? bodyElement.innerText : null;
 
-    return { title, time, body };
-  });
+      return { title, time, body };
+    }),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Page evaluate timeout for getMotd')), 15000)
+    )
+  ]);
 
   if (motd && motd.time) {
     try {
